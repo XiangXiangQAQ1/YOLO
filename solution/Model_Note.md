@@ -591,25 +591,40 @@ ch：是每个模块的输入通道列表（通常从 [3] 开始，即 RGB 三�
 
 
 # Train
+Train的目的为使model**更新各种参数**，学会提取需要识别的图像的**特征**，最终能独立判断出图像中需要框出来的部分。
+以下为Train的**具体流程**：
 - 首先，Train前需要load数据和model，以及定义好loss function, optimizer, scheduler；还需要warm up。dataloader会得到`(imgs, targets, paths, _)`,targets为`[image_index, class, x_center, y_center, width, height]（全是归一化坐标）`，即我们使用的labels。
-- 关键代码为forward开始时：
+- 其次,开始时model会随机预测出每个cell中的prediton(offset)，prediction的大小为`[batch_size, na, grid_x,grid_y, no ]`
+- 接着，我们计算loss，选择与目标框接近的anchor为基点，这样model学习的难度较小(可能多个anchor对一个target)。正样本 objectness的学习目标为pbox和tbox的iou(因为相交面积代表了我们对这里是否有目标的信心)，负样本objectness的学习目标为0；box的学习目标为tbox(目标box相对于选中cell的offset)；class的学习目标为target的class(每个prediction只对应一个class，其他class的概率都为0)。
+- 再次我们会通过反向传播，传播梯度，更新参数。
+- Remark：YOLO中使用的是混合精度训练(AMP)，大部分情况使用FP16，对精度要求高的操作(loss`scaler.scale(loss).backward()`)，保留FP32，这样可以节约计算资源.为什么不会出现梯度消失呢？计算loss时，我们使用float32，既不会梯度消失(loss乘以1024)，也不会梯度爆炸(原本是FP16，现在是FP32).并且更新权重时，梯度会除以1024，且会限制梯度大小，防止梯度爆炸。
+- Remark:YOLO 使用指数滑动平均（EMA）维护一份模型的平滑版本。随着训练迭代次数增加，EMA 对当前模型参数的更新幅度逐渐减小，更依赖过去累积的历史信息，从而使模型在评估时更加稳定，避免因瞬时波动导致性能不稳定。
+- 最后，我们会使用val验证model的功效，具体对不同的val的结果使用不同的权重，并且使用`fitness`定量。我们会记录下最高的fitness对应的model参数，即`best.pt`
 
-nb: 每个 epoch 中的批次数量（Number of Batches）。
+```text
+Train epoch
+↓
+Update LR scheduler
+↓
+Update EMA model 属性
+↓
+验证集评估 (validate)
+↓
+更新 best mAP（fitness）
+↓
+Early stopping 检查
+↓
+Callbacks 日志记录
 
-ni: 每个 epoch 中的迭代次数，通常等于 nb。
-
-nw: 数据加载时的并行线程数（Number of Workers）。
-
-nbs: 每个图像的批次大小，通常与 梯度累积 相关。
-
+```
 
 ## Loss
 `class Computeloss`
-用于计算损失,首先我们肯定不用所有的prediction计算损失，我们先挑选适合学习的anchor和cell。
+用于计算损失,首先我们肯定不用所有的prediction计算损失，我们先挑选**适合学习**的anchor和cell。
 - `build_targets(self, p, targets)`:找出比较适合用于学习(尺寸筛选较适合)`j = torch.max(r, 1 / r).max(2)[0] < anchor_t`的anchor框的大小和cell的idx。(p的作用是提供cell的大小)，`return tcls, tbox, indices, anch`.
-Remark:我们是针对于图中的每个label选择的anchor和对应的cell，所以可能出现多个anchors对应一个label。
-    - tcls:为class，一般层数为3，包含该层所有正样本的类别id，从target class中选择出来。类别根据target中的label选择出来，每个anchor需要学习box和对一个的label
-    - tbox：为目标l框在当前cell的offset与宽高`[x_offset, y_offset, width, height]`
+Remark:我们是针对于图中的每个label选择的anchor和对应的cell，所以可能出现**多个anchors对应一个label**。
+    - tcls:为class，一般层数为3，包含该层所有正样本的类别id，从target class中选择出来。类别根据target中的label选择出来，**每个anchor需要学习box和对一个的label**
+    - tbox：为目标框在当前cell的offset与宽高`[x_offset, y_offset, width, height]`
     - indices：`[b,a,gj,gi]`表示imgidx,anchoridx,gridxidx, gridyidx.
     - anch：表示anchor的大小`[width,height]`。
 ```python
@@ -627,14 +642,14 @@ def build_targets(self, p, targets):
         return tcls, tbox, indices, anch
 
 ```
-- 一共有三种损失，class，box(位置损失),objectness(目标存在损失),只有被build_targets选中的prediction`  pxy, pwh, _, pcls = pi[b, a, gj, gi].split((2, 2, 1, self.nc), 1)  `会计算class和box损失。
+- 一共有三种损失，**class，box(位置损失)**,**objectness(目标存在损失)**,只有被build_targets选中的prediction`  pxy, pwh, _, pcls = pi[b, a, gj, gi].split((2, 2, 1, self.nc), 1)  `会计算class和box损失。
 - box loss采取`pbox,tbox`的iou loss的平均值`lbox += (1.0 - iou).mean`
 ```python
  pbox = torch.cat((pxy, pwh), 1)  # predicted box
                 iou = bbox_iou(pbox, tbox[i], CIoU=True).squeeze()  # iou(prediction, target)
                 lbox += (1.0 - iou).mean()  # iou loss
 ```
-- objectness loss 采取交叉熵，没有被选中的predction的objectness为0。没有被选中的anchor也需要学习目标是否存在这件事情。并且我们希望选择的predction最后得出的conf和`pbox,tbox`的iou一致
+- objectness loss 采取**交叉熵**，**没有被选中的predction的objectness为0**。没有被选中的anchor也需要学习目标是否存在这件事情。并且我们希望选择的predction最后得出的conf和`pbox,tbox`的iou一致
 ```python
  # Objectness
                 iou = iou.detach().clamp(0).type(tobj.dtype)
@@ -780,21 +795,27 @@ ckpt = {
 ```
 
 ## Evaluation
-- 先通过valuation计算出p，R，MAP等，再通过`fitness`函数计算出具体的得分，
+- 先通过valuation计算出p，R，MAP等，再通过`fitness`函数计算出具体的得分.比较当前 fitness 和历史最高 fitness：
+
+如果当前 fitness 高于之前的最高值，就更新保存“最佳模型权重”（best model weights）。否则不保存，继续训练。
 ```python
-  # Update best mAP
+torch.save(ckpt, last)
+                if best_fitness == fi:
+                    torch.save(ckpt, best)
+```
+```python
+# Update best mAP
+def fitness(x):
+    # Model fitness as a weighted combination of metrics
+    w = [0.0, 0.0, 0.1, 0.9]  # weights for [P, R, mAP@0.5, mAP@0.5:0.95]
+    return (x[:, :4] * w).sum(1)
             fi = fitness(np.array(results).reshape(1, -1))  # weighted combination of [P, R, mAP@.5, mAP@.5-.95]
             stop = stopper(epoch=epoch, fitness=fi)  # early stop check
             if fi > best_fitness:
                 best_fitness = fi
 ```
-```python
-def fitness(x):
-    # Model fitness as a weighted combination of metrics
-    w = [0.0, 0.0, 0.1, 0.9]  # weights for [P, R, mAP@0.5, mAP@0.5:0.95]
-    return (x[:, :4] * w).sum(1)
 
-```
+
 
 ## save model
 ```python

@@ -314,6 +314,12 @@ python detect.py --img 640 --weights /root/dip_do/solution/yolov5/runs_saved/tra
 python val.py --weights runs/train/exp5/weights/best.pt --data coco128.yaml --img 640 --half
 
 python val.py --weights /root/dip_do/solution/yolov5/runs_saved/train/traffic_light_v.1.1/weights/best.pt --data traffic_light.yaml --img 640 --half
+
+# 用 test 集评估 mAP
+python val.py --weights runs/train/exp/weights/best.pt \
+              --data data.yaml \
+              --task test
+
 ```
 
 ## YOLOV5 输出格式
