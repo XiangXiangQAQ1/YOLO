@@ -1,0 +1,35 @@
+[33mb0d6816d[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m)[m HEAD@{0}: commit: update yolo
+[33mfd9bd52f[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{1}: reset: moving to HEAD~1
+[33ma15b0298[m HEAD@{2}: commit: update yolo
+[33mfd9bd52f[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{3}: reset: moving to HEAD~1
+[33me9ad3f8b[m HEAD@{4}: commit: update yolo
+[33mfd9bd52f[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{5}: pull origin master: Fast-forward
+[33m2758a36c[m HEAD@{6}: commit: update results Note
+[33m66d57e02[m HEAD@{7}: commit: traffic light v1.1
+[33m8431ea00[m HEAD@{8}: commit: delete confuse data
+[33m7bf2e46f[m HEAD@{9}: commit (merge): Merge branch 'new_structure'
+[33mc9b57eaa[m HEAD@{10}: checkout: moving from new_structure to master
+[33m5f4ee59c[m[33m ([m[1;31morigin/new_structure[m[33m, [m[1;32mnew_structure[m[33m)[m HEAD@{11}: checkout: moving from master to new_structure
+[33mc9b57eaa[m HEAD@{12}: commit: update Note
+[33ma15d75da[m HEAD@{13}: commit: Finish Detect
+[33m1c2df8c2[m HEAD@{14}: commit: finish base model
+[33m8e689e76[m HEAD@{15}: commit: Note update
+[33m75de678e[m HEAD@{16}: commit: adjustment
+[33mcbaa453d[m HEAD@{17}: commit: disposal data
+[33m69a7a923[m[33m ([m[1;31morigin/data[m[33m, [m[1;32mdata[m[33m)[m HEAD@{18}: checkout: moving from data to master
+[33m69a7a923[m[33m ([m[1;31morigin/data[m[33m, [m[1;32mdata[m[33m)[m HEAD@{19}: checkout: moving from master to data
+[33m69a7a923[m[33m ([m[1;31morigin/data[m[33m, [m[1;32mdata[m[33m)[m HEAD@{20}: pull origin data: Fast-forward
+[33meac69722[m HEAD@{21}: commit: Model_note 初步
+[33m8fa9d583[m HEAD@{22}: commit: delete traffic
+[33mc224b153[m HEAD@{23}: pull --no-rebase origin master: Merge made by the 'ort' strategy.
+[33m86ca9d32[m HEAD@{24}: commit: Test of traffic signial
+[33m39706d03[m HEAD@{25}: checkout: moving from pictures to master
+[33m1fe1b598[m[33m ([m[1;31morigin/pictures[m[33m, [m[1;32mpictures[m[33m)[m HEAD@{26}: pull origin pictures: Fast-forward
+[33mcc2f413d[m HEAD@{27}: commit: Try dog first time
+[33mcb559d7a[m[33m ([m[1;32mTry[m[33m)[m HEAD@{28}: commit: Finish Test
+[33m162d3c9d[m HEAD@{29}: commit: Test for YOLOV5
+[33m75d713b6[m HEAD@{30}: commit: source code
+[33m39706d03[m HEAD@{31}: checkout: moving from master to pictures
+[33m39706d03[m HEAD@{32}: pull origin pictures: Fast-forward
+[33ma086ba6e[m HEAD@{33}: commit: first test
+[33m659f3fc5[m HEAD@{34}: clone: from gitee.com:llliiinh0/dip_do.git

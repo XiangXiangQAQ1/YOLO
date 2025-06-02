@@ -1,0 +1,55 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: detect YOLOv5",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/solution/yolov5/detect.py", // 你的脚本路径
+            "args": [
+                "--img",
+                "640",
+                "--weights",
+                "/root/dip_do/solution/yolov5/runs_saved/train/Train_for_coco128/weights/best.pt",
+                "--source",
+                "/root/dip_do/solution/yolov5/datasets/coco128/images/train2017",
+            ],
+            "cwd": "${workspaceFolder}/solution/yolov5", // 设置你想要的工作目录路径
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Train YOLOv5",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/solution/yolov5/train.py", // 你的脚本路径
+            "args": [
+                "--data",
+                "coco128.yaml",
+                "--epochs",
+                "3",
+                "--weights",
+                "yolov5s.pt",
+                "--batch-size",
+                "128"
+            ],
+            "cwd": "${workspaceFolder}/solution/yolov5", // 设置你想要的工作目录路径
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: val YOLOv5",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/solution/yolov5/val.py", // 你的脚本路径
+            "args": [
+                "--img",
+                "640",
+                "--data",
+                "coco128.yaml",
+                "--weights",
+                "/root/dip_do/solution/yolov5/runs_saved/train/Train_for_coco128/weights/best.pt",
+            ],
+            "cwd": "${workspaceFolder}/solution/yolov5", // 设置你想要的工作目录路径
+            "console": "integratedTerminal"
+        },
+    ]
+}
